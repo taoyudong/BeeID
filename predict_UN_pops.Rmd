@@ -1,0 +1,425 @@
+
+# set wd, libraries required
+```{r}
+setwd("C:/working_directory")
+getwd()
+
+library(adegenet)
+require(readxl)
+require(openxlsx)
+library(tidyverse)
+options(stringsAsFactors = F, scipen = 999)
+
+```
+
+
+# load the R workspace
+```{r}
+load("dapc_funcs_AllNodes.RData")
+```
+
+
+```{r}
+require(readr)
+
+unknowns_data <- read_csv("Input_genotypeData.csv")
+SNPs_272_IDs_order <- read_excel("SNPs_272_IDs_order.xlsx", col_names = FALSE)[[1]]
+```
+
+
+```{r}
+if (any(duplicated(unknowns_data$SampleID))){
+  print("The follows duplicates found!")
+  print(unknowns_data$SampleID[duplicated(unknowns_data$SampleID)])
+}
+```
+
+```{r}
+print("Check whether all the columns are in the input file")
+length(unknowns_data[,SNPs_272_IDs_order]) == length(SNPs_272_IDs_order)
+
+unknowns_gtypes <- data.frame(unknowns_data[,SNPs_272_IDs_order])
+
+rownames(unknowns_gtypes) <- unknowns_data$SampleID
+root_gtypesFil2 <- unknowns_gtypes
+root_dataFil2 <- unknowns_data
+```
+
+
+# predict at root level using root_gtypesFil2 as input that contains 870 samples
+```{r}
+
+rownames(root_gtypesFil2) <- root_dataFil2$SampleID
+root_predict <- predict(root_dapc2, as.matrix(root_gtypesFil2), 
+                      method = c("plug-in","predictive","debiased"))
+
+
+# Extract the genotypes of samples that belong to A_1 and run predict using A_1_dapc
+# Get a boolean vector for samples that were assigned to A_1
+A_1_assigns <- root_predict$assign == "A_1"
+A_2_assigns <- root_predict$assign == "A_2"
+
+# Extract the genotypes for the A_1 and A_2 samples
+A_1_assignGtypes <- root_gtypesFil2[A_1_assigns,]
+A_2_assignGtypes <- root_gtypesFil2[A_2_assigns,]
+# Extract sampleIDs for the above two sets of genotypes
+A_1_assignIDs <- rownames(root_gtypesFil2[A_1_assigns,])
+A_2_assignIDs <- rownames(root_gtypesFil2[A_2_assigns,])
+```
+
+# Run predict at A level
+```{r}
+
+# Run the code if A_1_assignGtypes exists and if it has more than 0 rows
+if ( exists("A_1_assignGtypes") && dim(A_1_assignGtypes)[1] > 0) {
+  
+# predict for A_1
+A_1_predict <- predict(A_1_dapc, as.matrix(A_1_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to B_1_1
+B_1_1_assigns <- A_1_predict$assign == "scut_cap"
+B_1_2_assigns <- A_1_predict$assign == "B_1_2"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+B_1_1_assignGtypes <- A_1_assignGtypes[B_1_1_assigns,]
+B_1_2_assignGtypes <- A_1_assignGtypes[B_1_2_assigns,]
+}
+```
+
+
+```{r}
+# predict for A_2
+
+if ( exists("A_2_assignGtypes") && dim(A_2_assignGtypes)[1] > 0) {
+  
+
+A_2_predict <- predict(A_2_dapc, as.matrix(A_2_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+# Get a boolean vector for samples that were assigned to B_1_1
+B_2_1_assigns <- A_2_predict$assign == "B_2_1"
+B_2_2_assigns <- A_2_predict$assign == "B_2_2"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+B_2_1_assignGtypes <- A_2_assignGtypes[B_2_1_assigns,]
+B_2_2_assignGtypes <- A_2_assignGtypes[B_2_2_assigns,]
+
+}
+```
+
+# Run predict at B level
+```{r}
+# predict for B_1_2
+if ( exists("B_1_2_assignGtypes") && dim(B_1_2_assignGtypes)[1] > 0) {
+  
+B_1_2_predict <- predict(B_1_2_dapc, as.matrix(B_1_2_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_1_2_1, C_1_2_2
+C_1_2_1_assigns <- B_1_2_predict$assign == "Madg_sey"
+C_1_2_2_assigns <- B_1_2_predict$assign == "C_1_2_2"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+C_1_2_1_assignGtypes <- B_1_2_assignGtypes[C_1_2_1_assigns,]
+C_1_2_2_assignGtypes <- B_1_2_assignGtypes[C_1_2_2_assigns,]
+}
+```
+
+
+```{r}
+# predict for B_2_1
+if ( exists("B_2_1_assignGtypes") && dim(B_2_1_assignGtypes)[1] > 0) {
+  
+
+B_2_1_predict <- predict(B_2_1_dapc, as.matrix(B_2_1_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_2_1_1, C_2_1_2
+C_2_1_1_assigns <- B_2_1_predict$assign == "EU_lig_like"
+C_2_1_2_assigns <- B_2_1_predict$assign == "C_2_1_2"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+C_2_1_1_assignGtypes <- B_2_1_assignGtypes[C_2_1_1_assigns,]
+C_2_1_2_assignGtypes <- B_2_1_assignGtypes[C_2_1_2_assigns,]
+}
+```
+
+
+```{r}
+
+
+# predict for B_2_2
+#check whether B_2_2_assignGtypes is empty. If empty do not run this block of code
+if ( exists("B_2_2_assignGtypes") && dim(B_2_2_assignGtypes)[1] > 0) {
+  
+
+B_2_2_predict <- predict(B_2_2_dapc, as.matrix(B_2_2_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to B_1_1
+C_2_2_1_assigns <- B_2_2_predict$assign == "Turkey"
+C_2_2_2_assigns <- B_2_2_predict$assign == "Georgia_Turkey"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+C_2_2_1_assignGtypes <- B_2_2_assignGtypes[C_2_2_1_assigns,]
+C_2_2_2_assignGtypes <- B_2_2_assignGtypes[C_2_2_2_assigns,]
+}
+```
+
+# Run predict at C level
+
+```{r}
+# predict for C_1_2_2
+
+if ( exists("C_1_2_2_assignGtypes") && dim(C_1_2_2_assignGtypes)[1] > 0) {
+  
+
+C_1_2_2_predict <- predict(C_1_2_2_dapc, as.matrix(C_1_2_2_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_1_2_1, C_1_2_2
+D_1_2_2_1_assigns <- C_1_2_2_predict$assign == "D_1_2_2_1"
+D_1_2_2_2_assigns <- C_1_2_2_predict$assign == "MT_TN"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+D_1_2_2_1_assignGtypes <- C_1_2_2_assignGtypes[D_1_2_2_1_assigns,]
+D_1_2_2_2_assignGtypes <- C_1_2_2_assignGtypes[D_1_2_2_2_assigns,]
+}
+```
+
+
+
+```{r}
+# predict for C_1_2_2
+if ( exists("C_2_1_2_assignGtypes") && dim(C_2_1_2_assignGtypes)[1] > 0) {
+  
+C_2_1_2_predict <- predict(C_2_1_2_dapc, as.matrix(C_2_1_2_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_1_2_1, C_1_2_2
+D_2_1_2_1_assigns <- C_2_1_2_predict$assign == "Puerto_Rico"
+D_2_1_2_2_assigns <- C_2_1_2_predict$assign == "Iberiensis"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+D_2_1_2_1_assignGtypes <- C_2_1_2_assignGtypes[D_2_1_2_1_assigns,]
+D_2_1_2_2_assignGtypes <- C_2_1_2_assignGtypes[D_2_1_2_2_assigns,]
+}
+```
+
+# Run predict at D level
+
+```{r}
+# predict for D_1_2_2_1
+if ( exists("D_1_2_2_1_assignGtypes") && dim(D_1_2_2_1_assignGtypes)[1] > 0) {
+  
+D_1_2_2_1_predict <- predict(D_1_2_2_1_dapc, as.matrix(D_1_2_2_1_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_1_2_1, C_1_2_2
+E_1_2_2_1_1_assigns <- D_1_2_2_1_predict$assign == "Morocco"
+E_1_2_2_1_2_assigns <- D_1_2_2_1_predict$assign == "NWAfricanized"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+E_1_2_2_1_1_assignGtypes <- D_1_2_2_1_assignGtypes[E_1_2_2_1_1_assigns,]
+E_1_2_2_1_2_assignGtypes <- D_1_2_2_1_assignGtypes[E_1_2_2_1_2_assigns,]
+}
+```
+
+# Generate required output files
+
+```{r}
+
+# get assignations for B_1_1 node
+if(exists("B_1_1_assignGtypes")){
+reqSamps <- rownames(B_1_1_assignGtypes)
+A_1_predictRes <- cbind(reqSamps, rep("scut_cap", length(reqSamps)))
+}else{A_1_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for C_1_2_1 node
+if(exists("C_1_2_1_assignGtypes")){
+reqSamps <- rownames(C_1_2_1_assignGtypes)
+B_1_2_predictRes <- cbind(reqSamps, rep("Madg_sey", length(reqSamps)))
+}else{B_1_2_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for D_1_2_2_2 node
+if(exists("D_1_2_2_2_assignGtypes")){
+reqSamps <- rownames(D_1_2_2_2_assignGtypes)
+C_1_2_2_predictRes <- cbind(reqSamps, rep("MT_TN", length(reqSamps)))
+}else{C_1_2_2_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for E_1_2_2_1_1 node
+if(exists("E_1_2_2_1_1_assignGtypes")){
+reqSamps <- rownames(E_1_2_2_1_1_assignGtypes)
+D_1_2_2_1_I_predictRes <- cbind(reqSamps, rep("Morocco", length(reqSamps)))
+}else{D_1_2_2_1_I_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for E_1_2_2_1_2 node
+if(exists("E_1_2_2_1_2_assignGtypes")){
+reqSamps <- rownames(E_1_2_2_1_2_assignGtypes)
+D_1_2_2_1_II_predictRes <- cbind(reqSamps, rep("NWAfricanized", length(reqSamps)))
+}else{D_1_2_2_1_II_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for C_2_1_1 node
+if(exists("C_2_1_1_assignGtypes")){
+reqSamps <- rownames(C_2_1_1_assignGtypes)
+B_2_1_predictRes <- cbind(reqSamps, rep("EU_lig_like", length(reqSamps)))
+}else{B_2_1_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for D_2_1_2_1 node
+if(exists("D_2_1_2_1_assignGtypes")){
+reqSamps <- rownames(D_2_1_2_1_assignGtypes)
+C_2_1_2_I_predictRes <- cbind(reqSamps, rep("Puerto_Rico", length(reqSamps)))
+}else{C_2_1_2_I_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for D_2_1_2_2 node
+if(exists("D_2_1_2_2_assignGtypes")){
+reqSamps <- rownames(D_2_1_2_2_assignGtypes)
+C_2_1_2_II_predictRes <- cbind(reqSamps, rep("Iberiensis", length(reqSamps)))
+}else{C_2_1_2_II_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for C_2_2_1 node
+if(exists("C_2_2_1_assignGtypes")){
+reqSamps <- rownames(C_2_2_1_assignGtypes)
+B_2_2_I_predictRes <- cbind(reqSamps, rep("Turkey", length(reqSamps)))
+}else{B_2_2_I_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for C_2_2_2 node
+
+if(exists("C_2_2_2_assignGtypes")){
+reqSamps <- rownames(C_2_2_2_assignGtypes)
+B_2_2_II_predictRes <- cbind(reqSamps, rep("Georgia_Turkey", length(reqSamps)))
+}else{B_2_2_II_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+
+final_res <- rbind(A_1_predictRes, B_1_2_predictRes, C_1_2_2_predictRes, D_1_2_2_1_I_predictRes, D_1_2_2_1_II_predictRes, B_2_1_predictRes, C_2_1_2_I_predictRes, C_2_1_2_II_predictRes, B_2_2_I_predictRes, B_2_2_II_predictRes)
+
+
+write.xlsx(final_res,"predictRes_TierI.xlsx")
+
+```
+
+```{r}
+
+```
+
+
+
+############################################################
+######## TIER II ###########################################
+############################################################
+
+# for scutellata and capensis
+
+```{r}
+
+if ( exists("B_1_1_assignGtypes") && dim(B_1_1_assignGtypes)[1] > 0) {
+  
+
+B_1_1_predict <- predict(B_1_1_dapc2, as.matrix(B_1_1_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_1_2_1, C_1_2_2
+scut_assigns <- B_1_1_predict$assign == "Scutellata"
+cap_assigns <- B_1_1_predict$assign == "Capensis"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+scut_assignGtypes <- B_1_1_assignGtypes[scut_assigns,]
+cap_assignGtypes <- B_1_1_assignGtypes[cap_assigns,]
+}
+
+# get assignations for scutellata node
+if(exists("scut_assignGtypes")){
+reqSamps <- rownames(scut_assignGtypes)
+scut_predictRes <- cbind(reqSamps, rep("Scutellata", length(reqSamps)))
+}else{scut_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for capensis node
+if(exists("cap_assignGtypes")){
+reqSamps <- rownames(cap_assignGtypes)
+cap_predictRes <- cbind(reqSamps, rep("Capensis", length(reqSamps)))
+}else{cap_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+```
+
+# for Madagascar and Seychelles
+
+```{r}
+
+if ( exists("C_1_2_1_assignGtypes") && dim(C_1_2_1_assignGtypes)[1] > 0) {
+  
+
+C_1_2_1_predict <- predict(C_1_2_1_dapc, as.matrix(C_1_2_1_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to C_1_2_1, C_1_2_2
+mg_assigns <- C_1_2_1_predict$assign == "Madagascar"
+sy_assigns <- C_1_2_1_predict$assign == "Seychelles"
+
+# Extract the genotypes for the B_1_1 and B_1_2 samples
+mg_assignGtypes <- C_1_2_1_assignGtypes[mg_assigns,]
+sy_assignGtypes <- C_1_2_1_assignGtypes[sy_assigns,]
+}
+
+# get assignations for madagascar node
+if(exists("mg_assignGtypes")){
+reqSamps <- rownames(mg_assignGtypes)
+mg_predictRes <- cbind(reqSamps, rep("Madagascar", length(reqSamps)))
+}else{mg_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for seychelles node
+if(exists("sy_assignGtypes")){
+reqSamps <- rownames(sy_assignGtypes)
+sy_predictRes <- cbind(reqSamps, rep("Seychelles", length(reqSamps)))
+}else{sy_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+```
+
+
+# for Malta and Tunisia
+
+```{r}
+
+if ( exists("D_1_2_2_2_assignGtypes") && dim(D_1_2_2_2_assignGtypes)[1] > 0) {
+  
+
+D_1_2_2_2_predict <- predict(D_1_2_2_2_dapc, as.matrix(D_1_2_2_2_assignGtypes), 
+                      method = c("plug-in","predictive","debiased"))
+
+# Get a boolean vector for samples that were assigned to Malta and Tunisia
+mt_assigns <- D_1_2_2_2_predict$assign == "Malta"
+tn_assigns <- D_1_2_2_2_predict$assign == "Tunisia"
+
+# Extract the genotypes for the Malta and Tunisia samples
+mt_assignGtypes <- D_1_2_2_2_assignGtypes[mt_assigns,]
+tn_assignGtypes <- D_1_2_2_2_assignGtypes[tn_assigns,]
+}
+
+# get assignations for malta node
+if(exists("mt_assignGtypes")){
+reqSamps <- rownames(mt_assignGtypes)
+mt_predictRes <- cbind(reqSamps, rep("Malta", length(reqSamps)))
+}else{mt_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+# get assignations for seychelles node
+if(exists("tn_assignGtypes")){
+reqSamps <- rownames(tn_assignGtypes)
+tn_predictRes <- cbind(reqSamps, rep("Tunisia", length(reqSamps)))
+}else{tn_predictRes <- data.frame(ID = character(0), assgn = character(0))}
+
+```
+
+
+
+# Export Tier II result
+
+```{r}
+final_res_II <- rbind(scut_predictRes, cap_predictRes, mg_predictRes, sy_predictRes, mt_predictRes, tn_predictRes)
+
+write.xlsx(final_res_II,"predictRes_TierII.xlsx")
+```
+
+```{r}
+
+```
+
+
