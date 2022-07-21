@@ -27,13 +27,19 @@ The input file, prepared as specified above, needs to be given as input under th
 unknowns_data <- read_csv("Input_genotypes.csv")
 ```
 
-To facilitate easy testing of the BeeID the following test datasets are provided with data extracted in the  required input format of BeeID as described above.
+To facilitate easy testing of the BeeID the following test datasets are provided with data extracted in the required input format of BeeID as described above.
 
 1. Avalos et al. 2017 – 30 EHB samples from Hawaii; 28 AHB samples from Mexico; 30 PRHB samples from Puerto Rico
 2. Cridland et al. 2018 – 26 samples from Northern California and 18 samples from the Southern California
 3. Kadri et al. 2016 – 26 samples from Brazil
 4. Marcelino et al. in prep – 34 samples from PR
 5. Wallberg et al. 2014 – 10 *A. m. adansonii* samples, 10 Africanized samples from Brazil, 10 *A. m. anatoliaca* samples, 20 *A. m. mellifera* EU domestic, 10 *A. m. mellifera* US domestic, 10 *A. m. carnica* samples,  10 *A. m. capensis* samples, 10 *A. m. Iberiensis* samples, 10 *A. m. ligustica* samples, 20 *A. m. mellifera* Swedish-Norway samples, 10 *A. m. scutellata* samples
+
+## SNP Data for DAPC Analysis
+
+A subset of 183,609 SNPs in vcf format and gzipped. These are the SNPs common between Avalos et al (2017) and Wallberg et al (2014) SNP datasets and do not contain any missing genotypes in all 15 populations used in this study. These SNPs were analyzed with iterative DAPC analysis for the identification of the diagnostic SNPs.
+
+The aforementioned SNP data are made available at https://drive.google.com/file/d/1kfivP3why2q64sgqx8i3MCWt7qe-Yq_y/view?usp=sharing.
 
 ## References
 
