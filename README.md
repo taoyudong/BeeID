@@ -39,7 +39,7 @@ To facilitate easy testing of the BeeID the following test datasets are provided
 
 A subset of 183,609 SNPs in vcf format and gzipped. These are the SNPs common between Avalos et al (2017) and Wallberg et al (2014) SNP datasets and do not contain any missing genotypes in all 15 populations used in this study. These SNPs were analyzed with iterative DAPC analysis for the identification of the diagnostic SNPs.
 
-The aforementioned SNP data are made available at https://drive.google.com/file/d/1kfivP3why2q64sgqx8i3MCWt7qe-Yq_y/view?usp=sharing.
+The aforementioned SNP data are made available at [Google Drive](https://drive.google.com/file/d/1oM-ttRnPa2VxIiOZV7Yh2DwP5uPpH2LJ/view?usp=sharing).
 
 ## References
 
