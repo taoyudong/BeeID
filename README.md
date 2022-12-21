@@ -47,7 +47,7 @@ To facilitate easy testing of the HBeeID the following test datasets are provide
 3. Kadri et al. 2016 – 26 samples from Brazil
 5. Wallberg et al. 2014 – 10 *A. m. adansonii* samples, 10 Africanized samples from Brazil, 10 *A. m. anatoliaca* samples, 20 *A. m. mellifera* EU domestic, 10 *A. m. mellifera* US domestic, 10 *A. m. carnica* samples,  10 *A. m. capensis* samples, 10 *A. m. Iberiensis* samples, 10 *A. m. ligustica* samples, 20 *A. m. mellifera* Swedish-Norway samples, 10 *A. m. scutellata* samples
 
-## Supplementary Data 2: SNP Data Used for DAPC Analysis
+## Supplementary Data 1: SNP Data Used for DAPC Analysis
 
 A subset of 183,609 SNPs in vcf format and gzipped. These are the SNPs common between Avalos et al (2017) and Wallberg et al (2014) SNP datasets and do not contain any missing genotypes in all 15 populations used in this study. These SNPs were analyzed with iterative DAPC analysis for the identification of the diagnostic SNPs.
 
